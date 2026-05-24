@@ -1,0 +1,57 @@
+import streamlit as st
+import random
+
+st.set_page_config(page_title="Snake Pro", page_icon="🐍")
+st.markdown("<h1 style='text-align: center; color: #06B6D4;'>🐍 Snake Pro Arena</h1>", unsafe_allow_html=True)
+
+# تهيئة حالة اللعبة
+if 'snake' not in st.session_state:
+    st.session_state.snake = [(10, 10), (10, 11)]
+    st.session_state.direction = (0, -1)
+    st.session_state.food = (5, 5)
+    st.session_state.score = 0
+    st.session_state.high_score = 0
+
+# التحكم في الاتجاه
+col1, col2, col3 = st.columns(3)
+if col2.button("⬆️ UP"): st.session_state.direction = (-1, 0)
+if col1.button("⬅️ LEFT"): st.session_state.direction = (0, -1)
+if col3.button("➡️ RIGHT"): st.session_state.direction = (0, 1)
+col2.button("⬇️ DOWN", on_click=lambda: st.session_state.update({'direction': (1, 0)}))
+
+# تحديث المنطق
+def move_snake():
+    head = st.session_state.snake[0]
+    new_head = (head[0] + st.session_state.direction[0], head[1] + st.session_state.direction[1])
+    
+    # التحقق من الاصطدام
+    if new_head[0] < 0 or new_head[0] >= 15 or new_head[1] < 0 or new_head[1] >= 15 or new_head in st.session_state.snake:
+        st.error(f"Game Over! Final Score: {st.session_state.score}")
+        if st.session_state.score > st.session_state.high_score:
+            st.session_state.high_score = st.session_state.score
+        st.session_state.snake = [(10, 10), (10, 11)]
+        st.session_state.score = 0
+        return
+
+    st.session_state.snake.insert(0, new_head)
+    if new_head == st.session_state.food:
+        st.session_state.score += 10
+        st.session_state.food = (random.randint(0, 14), random.randint(0, 14))
+    else:
+        st.session_state.snake.pop()
+
+move_snake()
+
+# الرسم (Grid)
+grid_size = 15
+display = ""
+for r in range(grid_size):
+    for c in range(grid_size):
+        if (r, c) == st.session_state.food: display += "🍎"
+        elif (r, c) == st.session_state.snake[0]: display += "🐲"
+        elif (r, c) in st.session_state.snake: display += "🟩"
+        else: display += "⬛"
+    display += "\n"
+
+st.code(display)
+st.write(f"### 🏆 Score: {st.session_state.score} | 👑 High Score: {st.session_state.high_score}")
